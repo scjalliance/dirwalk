@@ -17,20 +17,25 @@ var (
 	depthMax    = kingpin.Flag("depth", "Walk depth").Default("-1").Int()
 )
 
+func depth(path string) int {
+	return len(strings.Split(path, string(os.PathSeparator)))
+}
+
 func main() {
 	kingpin.Parse()
 	var err error
 	rootAbs, err = filepath.Abs(*rootDir)
-	rootDepth := len(strings.Split(rootAbs, string(os.PathSeparator)))
+	rootDepth := depth(strings.TrimRight(rootAbs, string(os.PathSeparator)))
 	if err != nil {
 		panic(err)
 	}
 	err = filepath.Walk(rootAbs, func(path string, info os.FileInfo, err error) error {
+		depth := depth(path)
 		if err != nil {
 			return nil
 			// return err // maybe we want to complain but not explode?
 		}
-		if depth := len(strings.Split(path, string(os.PathSeparator))); *depthMax >= 0 && depth-rootDepth > *depthMax {
+		if *depthMax >= 0 && depth-rootDepth > *depthMax {
 			return filepath.SkipDir
 		}
 		if !*outputDirs && info.IsDir() {
